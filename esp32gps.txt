@@ -1,0 +1,126 @@
+import machine
+import time
+import network
+import urequests
+import ujson
+from machine import UART, Pin
+
+# Configuration
+WIFI_SSID = "College_WiFi"
+WIFI_PASS = "College_Password"
+SERVER_URL = "https://your-server-ip:5000/api/update"
+DEVICE_ID = "ESP32_01"  # Should match faculty ID in system
+GPS_UPDATE_INTERVAL = 30  # seconds
+RFID_UPDATE_INTERVAL = 5  # seconds
+
+# Hardware setup
+uart_gps = UART(2, baudrate=9600, tx=17, rx=16)
+rfid_uart = UART(1, baudrate=9600, tx=25, rx=26)
+led = Pin(2, Pin.OUT)
+rfid_enable = Pin(27, Pin.OUT)
+
+# WiFi connection
+def connect_wifi():
+    sta_if = network.WLAN(network.STA_IF)
+    if not sta_if.isconnected():
+        print("Connecting to WiFi...")
+        sta_if.active(True)
+        sta_if.connect(WIFI_SSID, WIFI_PASS)
+        while not sta_if.isconnected():
+            time.sleep(1)
+            led.value(not led.value())
+    print("WiFi connected:", sta_if.ifconfig())
+    led.value(1)
+
+# Parse GPS data
+def parse_gps(data):
+    parts = data.split(',')
+    if parts[0] == '$GPGGA' and len(parts) >= 10:
+        if parts[6] == '0':  # 0 = no fix
+            return None
+        
+        # Convert latitude and longitude to decimal degrees
+        lat = float(parts[2][:2]) + float(parts[2][2:])/60
+        if parts[3] == 'S':
+            lat = -lat
+            
+        lon = float(parts[4][:3]) + float(parts[4][3:])/60
+        if parts[5] == 'W':
+            lon = -lon
+            
+        return (lat, lon)
+    return None
+
+# Read RFID tag
+def read_rfid():
+    rfid_enable.value(1)
+    time.sleep(0.1)
+    if rfid_uart.any():
+        data = rfid_uart.readline()
+        if data:
+            tag = data.decode('utf-8').strip()
+            return tag
+    rfid_enable.value(0)
+    return None
+
+# Send location to server
+def send_location(lat, lng, source, rfid_reader=None):
+    payload = {
+        "device_id": DEVICE_ID,
+        "source": source,
+        "lat": lat,
+        "lng": lng
+    }
+    
+    if source == "rfid":
+        payload["reader_id"] = rfid_reader
+        payload["rfid_tag"] = read_rfid()
+    
+    try:
+        response = urequests.post(
+            SERVER_URL,
+            headers={'Content-Type': 'application/json'},
+            data=ujson.dumps(payload)
+        )
+        if response.status_code == 200:
+            print("Location updated successfully")
+        else:
+            print("Update failed:", response.text)
+        response.close()
+    except Exception as e:
+        print("Error sending location:", e)
+
+# Main loop
+def main():
+    connect_wifi()
+    last_gps_update = 0
+    last_rfid_check = 0
+    
+    while True:
+        current_time = time.time()
+        
+        # GPS Handling
+        if current_time - last_gps_update >= GPS_UPDATE_INTERVAL:
+            if uart_gps.any():
+                data = uart_gps.readline()
+                if data:
+                    gps_data = parse_gps(data.decode('utf-8'))
+                    if gps_data:
+                        lat, lng = gps_data
+                        print(f"GPS Location: {lat}, {lng}")
+                        send_location(lat, lng, "gps")
+                        last_gps_update = current_time
+        
+        # RFID Handling
+        if current_time - last_rfid_check >= RFID_UPDATE_INTERVAL:
+            rfid_tag = read_rfid()
+            if rfid_tag:
+                print(f"RFID detected: {rfid_tag}")
+                # Assuming we know which reader we're at (could be configured per device)
+                send_location(0, 0, "rfid", "reader_1")  # Coordinates will be overridden by server
+                last_rfid_check = current_time
+        
+        time.sleep(1)
+
+if __name__ == "__main__":
+    main()
