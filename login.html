@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBCE FTS - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #7c3aed;
+            --accent: #ec4899;
+            --light: #f8fafc;
+            --dark: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --success: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(45deg, var(--dark) 0%, #020617 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        .background-pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(var(--glass) 1px, transparent 1px),
+                linear-gradient(to bottom right, transparent 49.5%, var(--glass) 49.5%, var(--glass) 50.5%, transparent 50.5%);
+            background-size: 40px 40px, 80px 80px;
+            animation: float 20s linear infinite, patternRotate 120s linear infinite;
+        }
+
+        @keyframes float {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 1000px 1000px, 2000px 2000px; }
+        }
+
+        @keyframes patternRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .login-container {
+            position: relative;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.25),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass);
+            transform: translateY(20px) rotateX(5deg);
+            opacity: 0;
+            animation: 
+                slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards,
+                containerFloat 8s ease-in-out infinite 1s;
+            transition: all 0.5s ease;
+            z-index: 10;
+        }
+
+        @keyframes slideUp {
+            to {
+                transform: translateY(0) rotateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes containerFloat {
+            0%, 100% { transform: translateY(0) rotateX(0); }
+            50% { transform: translateY(-10px) rotateX(2deg); }
+        }
+
+        .login-container:hover {
+            box-shadow: 
+                0 35px 60px -15px rgba(0, 0, 0, 0.3),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            animation: 
+                logoFloat 3s ease-in-out infinite,
+                pulse 2s infinite alternate,
+                logoRotate 20s linear infinite;
+            box-shadow: 0 10px 30px -10px rgba(79, 70, 229, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                transparent 45%,
+                rgba(255, 255, 255, 0.1) 50%,
+                transparent 55%
+            );
+            transform: rotate(30deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4), 0 10px 30px -10px rgba(79, 70, 229, 0.5); }
+            100% { box-shadow: 0 0 0 20px rgba(79, 70, 229, 0), 0 15px 40px -5px rgba(79, 70, 229, 0.7); }
+        }
+
+        @keyframes logoRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--light) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+            animation: 
+                textGlow 2s infinite alternate,
+                textFlow 8s ease-in-out infinite;
+            position: relative;
+        }
+
+        @keyframes textGlow {
+            0% { text-shadow: 0 0 5px rgba(248, 250, 252, 0.3); }
+            100% { text-shadow: 0 0 15px rgba(79, 70, 229, 0.6); }
+        }
+
+        @keyframes textFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .login-subtext {
+            color: var(--light);
+            opacity: 0.8;
+            font-size: 0.9rem;
+            animation: fadeIn 1s ease-in-out;
+            letter-spacing: 1px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 0.8; transform: translateY(0); }
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: formFadeIn 0.8s ease-in-out 0.3s both;
+        }
+
+        @keyframes formFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass);
+            border-radius: 10px;
+            color: var(--light);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 
+                0 0 0 3px rgba(79, 70, 229, 0.3),
+                inset 0 0 10px rgba(79, 70, 229, 0.1);
+            animation: inputFocus 0.5s ease;
+            transform: translateY(-2px);
+        }
+
+        @keyframes inputFocus {
+            0% { transform: scale(1) translateY(0); }
+            50% { transform: scale(1.02) translateY(-3px); }
+            100% { transform: scale(1) translateY(-2px); }
+        }
+
+        .form-label {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--light);
+            opacity: 0.6;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            background: linear-gradient(to right, transparent, rgba(15, 23, 42, 0.8) 20%, transparent);
+            padding: 0 0.5rem;
+        }
+
+        .form-input:focus ~ .form-label,
+        .form-input:not(:placeholder-shown) ~ .form-label {
+            transform: translateY(-180%);
+            font-size: 0.8rem;
+            opacity: 1;
+            color: var(--primary);
+            text-shadow: 0 0 5px rgba(15, 23, 42, 0.8);
+            background: transparent;
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+            z-index: 1;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 25px -5px rgba(79, 70, 229, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 5px 10px rgba(79, 70, 229, 0.3);
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+            z-index: -1;
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
+        }
+
+        .login-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary) 100%);
+            z-index: -2;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .login-btn:hover::after {
+            opacity: 1;
+        }
+
+        .forgot-password {
+            text-align: center;
+            color: var(--light);
+            opacity: 0.8;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: inline-block;
+            margin: 0 auto;
+        }
+
+        .forgot-password:hover {
+            opacity: 1;
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .forgot-password::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .forgot-password:hover::after {
+            width: 100%;
+        }
+
+        .floating-circles div {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.3;
+            animation: float 15s infinite linear;
+        }
+
+        .floating-circles div:nth-child(1) {
+            top: 20%;
+            left: 20%;
+            animation-delay: 0s;
+            width: 100px;
+            height: 100px;
+        }
+
+        .floating-circles div:nth-child(2) {
+            top: 60%;
+            right: 20%;
+            animation-delay: -5s;
+            width: 80px;
+            height: 80px;
+        }
+
+        .floating-circles div:nth-child(3) {
+            bottom: 20%;
+            left: 40%;
+            animation-delay: -10s;
+        }
+
+        .floating-circles div:nth-child(4) {
+            top: 30%;
+            right: 30%;
+            animation-delay: -7s;
+            width: 120px;
+            height: 120px;
+            opacity: 0.2;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(100px, 100px) rotate(90deg); }
+            50% { transform: translate(50px, 150px) rotate(180deg); }
+            75% { transform: translate(-50px, 100px) rotate(270deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: particleFall linear infinite;
+        }
+
+        @keyframes particleFall {
+            0% { transform: translateY(-100vh); }
+            100% { transform: translateY(100vh); }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 2rem;
+                margin: 1rem;
+                transform: translateY(0) rotateX(0);
+            }
+            
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .logo-text {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-pattern"></div>
+    <div class="floating-circles">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+    <div class="particles" id="particles"></div>
+
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo">📚</div>
+            <h1 class="logo-text">SBCE FTS</h1>
+            <p class="login-subtext">Faculty Tracking System</p>
+        </div>
+
+        <form class="login-form" action="/login" method="POST">
+            <div class="form-group">
+                <input type="text" class="form-input" id="username" name="username" placeholder=" " required>
+                <label class="form-label" for="username">Username</label>
+            </div>
+
+            <div class="form-group">
+                <input type="password" class="form-input" id="password" name="password" placeholder=" " required>
+                <label class="form-label" for="password">Password</label>
+            </div>
+
+            <button type="submit" class="login-btn">Sign In</button>
+            
+            <p class="forgot-password">Forgot Password?</p>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.width = `${Math.random() * 3 + 1}px`;
+                particle.style.height = particle.style.width;
+                particle.style.opacity = Math.random() * 0.2;
+                particle.style.animationDuration = `${Math.random() * 20 + 10}s`;
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+
+            const inputs = document.querySelectorAll('.form-input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.querySelector('.form-label').style.color = 'var(--primary)';
+                });
+                
+                input.addEventListener('blur', function() {
+                    if (!this.value) {
+                        this.parentElement.querySelector('.form-label').style.color = 'var(--light)';
+                    }
+                });
+            });
+
+            const loginBtn = document.querySelector('.login-btn');
+            loginBtn.addEventListener('mousedown', function() {
+                this.style.transform = 'translateY(0)';
+            });
+            
+            loginBtn.addEventListener('mouseup', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+        });
+    </script>
+</body>
+</html>

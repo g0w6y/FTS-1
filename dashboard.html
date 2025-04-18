@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sree Buddha College - Faculty Tracking Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #7c3aed;
+            --accent: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --light: #f8fafc;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --gray: #64748b;
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark) 0%, #020617 100%);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+  
+
+        /* Main Dashboard */
+        .dashboard-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            opacity: 0;
+            animation: fadeIn 1s 0.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+            border-radius: 20px;
+            padding: 2rem 1.5rem;
+            height: calc(100vh - 4rem);
+            position: sticky;
+            top: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+
+        .sidebar:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .college-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--light) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .nav-menu {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            color: var(--gray);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .nav-item i {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Header */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: slideDown 0.8s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            width: 350px;
+            transition: var(--transition);
+        }
+
+        .search-bar:focus-within {
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: var(--light);
+            padding: 0 1rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+        }
+
+        .user-info {
+            line-height: 1.4;
+        }
+
+        .user-info small {
+            color: var(--gray);
+            font-size: 0.85rem;
+            display: block;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+            padding: 1.75rem;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: var(--shadow-lg);
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.2s; }
+        .stat-card:nth-child(2) { animation-delay: 0.4s; }
+        .stat-card:nth-child(3) { animation-delay: 0.6s; }
+        .stat-card:nth-child(4) { animation-delay: 0.8s; }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+        }
+
+        .stat-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(to right, var(--light) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        /* Faculty Section */
+        .section-container {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+        }
+
+        .section-container:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, var(--light) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .section-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--gray);
+            color: var(--gray);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* Faculty Grid */
+        .faculty-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .faculty-card {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: fadeIn 0.8s ease;
+        }
+
+        .faculty-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .faculty-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, transparent 100%);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            position: relative;
+        }
+
+        .faculty-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            transition: var(--transition);
+        }
+
+        .faculty-card:hover .faculty-avatar {
+            transform: rotate(15deg) scale(1.1);
+        }
+
+        .faculty-info {
+            flex: 1;
+        }
+
+        .faculty-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .faculty-dept {
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .faculty-status {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .faculty-body {
+            padding: 1.5rem;
+        }
+
+        .faculty-details {
+            list-style: none;
+        }
+
+        .faculty-details li {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .detail-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .detail-value {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .faculty-footer {
+            padding: 1rem 1.5rem;
+            background: rgba(15, 23, 42, 0.8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .track-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            outline: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .track-btn:hover {
+            background: rgba(79, 70, 229, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Map Section */
+        .map-container {
+            height: 600px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #college-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 1rem;
+            border-radius: 12px;
+            z-index: 1000;
+            max-width: 300px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .map-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .map-info {
+            color: var(--gray);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Add Faculty Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            padding: 2rem;
+            box-shadow: var(--shadow-xl);
+            transform: translateY(20px);
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--light);
+        }
+
+        .close-modal {
+            background: transparent;
+            border: none;
+            color: var(--gray);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .close-modal:hover {
+            color: var(--danger);
+            transform: rotate(90deg);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--gray);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            color: var(--light);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 16px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                height: auto;
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                gap: 1.5rem;
+                padding: 1.5rem;
+            }
+            
+            .search-bar {
+                width: 100%;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .section-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .dashboard-container {
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .faculty-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal {
+                padding: 1.5rem;
+            }
+        }
+        
+ #college-map {
+        width: 100%;
+        height: 100%;
+        min-height: 400px; /* Ensures map has minimum height */
+        z-index: 1;
+        background: #1a202c; /* Fallback color while loading */
+    }
+
+    .leaflet-container {
+        background: #1a202c !important; /* Match dark theme */
+    }
+
+    .leaflet-tile-container img {
+        filter: invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%); /* Dark mode map tiles */
+    }
+    </style>
+</head>
+<body>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="college-logo">
+                <div class="logo-icon">SB</div>
+                <div class="logo-text">Sree Buddha College</div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active">
+                    <i>📊</i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i>👨‍🏫</i>
+                    <span>Faculty</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i>👨‍🎓</i>
+                    <span>Students</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i>🏛️</i>
+                    <span>Departments</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i>📍</i>
+                    <span>Live Tracking</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i>⚙️</i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="nav-item" onclick="location.href='/logout'">
+                    <i>🔒</i>
+                    <span>Logout</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="search-bar">
+                    <i>🔍</i>
+                    <input type="text" placeholder="Search faculty, students, departments...">
+                </div>
+                
+                <div class="user-profile">
+                    <div class="user-avatar">GP</div>
+                    <div class="user-info">
+                        <div>Geethu P</div>
+                        <small>Admin | B.Tech 2nd Year</small>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👨‍🎓</div>
+                    <div class="stat-content">
+                        <div class="stat-value">1,850</div>
+                        <div class="stat-label">Total Students</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">👨‍🏫</div>
+                    <div class="stat-content">
+                        <div class="stat-value">68</div>
+                        <div class="stat-label">Faculty Members</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-content">
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Departments</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🏛️</div>
+                    <div class="stat-content">
+                        <div class="stat-value">4</div>
+                        <div class="stat-label">College Blocks</div>
+                    </div>
+                </div>
+            </div>
+            
+<!-- Faculty Section -->
+<section class="section-container">
+  <div class="section-header">
+    <h2 class="section-title">Faculty Directory</h2>
+    <div class="section-actions">
+      <button class="btn btn-outline">
+        <i>🔄</i>
+        <span>Refresh</span>
+      </button>
+      <button class="btn btn-primary" id="add-faculty-btn">
+        <i>➕</i>
+        <span>Add Faculty</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="faculty-grid" id="faculty-grid">
+    <!-- Faculty cards will be loaded here via JS -->
+  </div>
+</section>
+            <!-- Map Section -->
+            <section class="section-container">
+                <div class="section-header">
+                    <h2 class="section-title">Live Faculty Tracking</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-outline">
+                            <i>🔄</i>
+                            <span>Refresh</span>
+                        </button>
+                        <button class="btn btn-primary">
+                            <i>📍</i>
+                            <span>Track All</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="map-container">
+                    <div id="college-map"></div>
+                    <div class="map-overlay">
+                        <div class="map-title">Sree Buddha College of Engineering</div>
+                        <div class="map-info">
+                            <div>📞 094460 14317</div>
+                            <div>📍 Pattoor, Kerala 689696</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Add Faculty Modal -->
+    <div class="modal-overlay" id="add-faculty-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Faculty</h3>
+                <button class="close-modal" id="close-modal">&times;</button>
+            </div>
+            
+            <form id="faculty-form">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" placeholder="Enter faculty name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <select class="form-control form-select" required>
+                        <option value="">Select Department</option>
+                        <option>Electronics & Computer Engineering</option>
+                        <option>Electrical & Electronics Engineering</option>
+                        <option>Electronics & Communication Engineering</option>
+                        <option>Computer Science Engineering</option>
+                        <option>Computer Science & AIML</option>
+                        <option>Civil Engineering</option>
+                        <option>Mechanical Engineering</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Contact Number</label>
+                    <input type="tel" class="form-control" placeholder="Enter contact number" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control" placeholder="Enter email address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Assigned Block</label>
+                    <select class="form-control form-select" required>
+                        <option value="">Select Block</option>
+                        <option>Block A - Main Block</option>
+                        <option>Block B - Mechanical</option>
+                        <option>Block C - Computer Science</option>
+                        <option>Block D - Civil Block</option>
+                    </select>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancel-add">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Faculty</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  let mapMarkers = {};
+  let layerNormal, layerSatellite;
+
+  const map = L.map('college-map', {
+    center: [9.212433,76.642351],
+    zoom: 17,
+    zoomControl: false,
+    attributionControl: false
+  });
+
+  // Base Layers
+  layerNormal = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+  layerSatellite = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17 });
+
+  L.control.layers({ "Normal": layerNormal, "Satellite": layerSatellite }).addTo(map);
+  L.control.zoom({ position: 'topright' }).addTo(map);
+
+  // =========================
+  // Load Faculty Cards
+  // =========================
+  async function loadFacultyCards() {
+    try {
+      const res = await fetch("/api/faculty");
+      const data = await res.json();
+      const grid = document.getElementById("faculty-grid");
+      grid.innerHTML = "";
+
+      for (const [id, faculty] of Object.entries(data)) {
+        const card = document.createElement("div");
+        card.className = "faculty-card";
+        card.innerHTML = `
+                <div class="faculty-header">
+                    <div class="faculty-avatar">${id}</div>
+                    <div class="faculty-info">
+                        <div class="faculty-name">${faculty.name}</div>
+                        <div class="faculty-dept">${faculty.dept}</div>
+                    </div>
+                    <div class="faculty-status">
+                        <span>Inactive</span>
+                        <div class="status-indicator"></div>
+                    </div>
+                </div>
+                <div class="faculty-body">
+                    <ul class="faculty-details">
+                        <li><span class="detail-label">Contact:</span><span class="detail-value">${faculty.contact}</span></li>
+                        <li><span class="detail-label">Email:</span><span class="detail-value">${faculty.email}</span></li>
+                        <li><span class="detail-label">Block:</span><span class="detail-value">${faculty.block}</span></li>
+                    </ul>
+                </div>
+                <div class="faculty-footer">
+                    <span class="detail-label">Last seen: unknown</span>
+                    <button class="track-btn"><i>📍</i><span>Track</span></button>
+                </div>
+            `;
+        grid.appendChild(card);
+      }
+
+      bindTrackButtons();
+    } catch (err) {
+      console.error("Error loading faculty:", err);
+    }
+  }
+
+  // =========================
+  // Update Locations
+  // =========================
+  async function fetchAndRenderLocations() {
+    try {
+      const res = await fetch("/api/locations");
+      const data = await res.json();
+
+      for (const [id, info] of Object.entries(data)) {
+        const { lat, lng, name, source, status, timestamp } = info;
+        const popup = `
+                <b>${name}</b><br>
+                Source: ${source.toUpperCase()}<br>
+                Status: ${status.toUpperCase()}<br>
+                Last seen: ${new Date(timestamp).toLocaleTimeString()}<br>
+                Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}
+            `;
+
+        if (mapMarkers[id]) {
+          mapMarkers[id].setLatLng([lat, lng]);
+          mapMarkers[id].setPopupContent(popup);
+        } else {
+          mapMarkers[id] = L.marker([lat, lng]).addTo(map).bindPopup(popup);
+        }
+
+        // Update status in card
+        document.querySelectorAll(".faculty-card").forEach(card => {
+          const nameText = card.querySelector(".faculty-name").textContent.trim();
+          if (nameText === name) {
+            const statusEl = card.querySelector(".faculty-status span");
+            const seenEl = card.querySelector(".faculty-footer span");
+
+            statusEl.textContent = status === "active" ? "Active" : "Inactive";
+            statusEl.style.color = status === "active" ? "#10b981" : "#ef4444";
+            seenEl.textContent = "Last seen: " + new Date(timestamp).toLocaleTimeString();
+          }
+        });
+      }
+    } catch (e) {
+      console.error("Location fetch failed", e);
+    }
+  }
+
+  // =========================
+  // Track Buttons Binding
+  // =========================
+  function bindTrackButtons() {
+    document.querySelectorAll(".track-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const card = btn.closest(".faculty-card");
+        const name = card.querySelector(".faculty-name").textContent.trim();
+
+        for (const [id, marker] of Object.entries(mapMarkers)) {
+          if (marker.getPopup().getContent().includes(name)) {
+            map.setView(marker.getLatLng(), 18, { animate: true });
+            marker.openPopup();
+            return;
+          }
+        }
+        alert("Location not available for " + name);
+      });
+    });
+  }
+
+  // =========================
+  // Track All & Refresh
+  // =========================
+  document.querySelectorAll(".btn-primary").forEach(btn => {
+    if (btn.textContent.includes("Track All")) {
+      btn.addEventListener("click", () => {
+        const group = L.featureGroup(Object.values(mapMarkers));
+        if (Object.keys(mapMarkers).length > 0) {
+          map.fitBounds(group.getBounds(), { padding: [50, 50] });
+        }
+      });
+    }
+  });
+
+  document.querySelectorAll(".btn-outline").forEach(btn => {
+    if (btn.textContent.includes("Refresh")) {
+      btn.addEventListener("click", () => {
+        fetchAndRenderLocations();
+      });
+    }
+  });
+
+  // =========================
+  // Add Faculty Modal Logic
+  // =========================
+  document.getElementById("add-faculty-btn").addEventListener("click", () => {
+    document.getElementById("add-faculty-modal").classList.add("active");
+  });
+  document.getElementById("close-modal").addEventListener("click", () => {
+    document.getElementById("add-faculty-modal").classList.remove("active");
+  });
+  document.getElementById("cancel-add").addEventListener("click", () => {
+    document.getElementById("add-faculty-modal").classList.remove("active");
+  });
+
+  // =========================
+  // Add Faculty Submit
+  // =========================
+  document.getElementById("faculty-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const name = this.querySelector('input[placeholder="Enter faculty name"]').value.trim();
+    const dept = this.querySelector('select').value;
+    const contact = this.querySelector('input[placeholder="Enter contact number"]').value.trim();
+    const email = this.querySelector('input[placeholder="Enter email address"]').value.trim();
+    const block = this.querySelectorAll('select')[1].value;
+
+    const initials = name.split(" ").map(w => w[0].toUpperCase()).join("").slice(0, 2);
+
+    const payload = {
+      id: initials,
+      name: name,
+      dept: dept,
+      contact: contact,
+      email: email,
+      block: block
+    };
+
+    try {
+      const res = await fetch("/api/add_faculty", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        alert("Faculty added successfully.");
+        document.getElementById("add-faculty-modal").classList.remove("active");
+        await loadFacultyCards();
+        fetchAndRenderLocations();
+      } else {
+        alert("Error: " + result.error);
+      }
+    } catch (err) {
+      console.error("Add Faculty Error:", err);
+      alert("An error occurred while adding faculty.");
+    }
+  });
+
+  // =========================
+  // Init on Load + Auto Refresh
+  // =========================
+  loadFacultyCards();
+  fetchAndRenderLocations();
+  setInterval(fetchAndRenderLocations, 5000);
+</script>
+</body>
+</html>
